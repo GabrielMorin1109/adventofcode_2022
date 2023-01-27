@@ -1,0 +1,39 @@
+############################################################
+				R 
+############################################################
+Day1 <- function(){
+  require(data.table)
+  # path to wd # path.wd <- "/home/gabriel/Documents/Github/adventofcode_2022/Day1/" # for benchmark
+  path.wd <- dirname(rstudioapi::getSourceEditorContext()$path)
+  setwd(path.wd)
+  # read data:
+  dd <- data.table::fread("input.txt")
+  # data.table::setnames(dd, new = 'Elf') # for better reading 
+  # Create a group column exploiting the rows with NA
+  dd[, Grp := cumsum(is.na(V1)) + 1]
+  # sum by group
+  tmp <- dd[, .(cumV1 = sum(V1, na.rm = TRUE)), Grp]
+  tmp[, {
+    .n = .N # number of rows
+    .range = .n:(.n - 2) # save in memory the select range to limit the number of copies
+    .n.largest = sort(cumV1,  partial = .range)[.range] # partial sorting is faster than normal sorting
+    .(sol1 = .n.largest[1], sol2 = sum(.n.largest)) # final solution:
+  }]
+}; Day1()
+
+############################################################
+			    PYTHON 
+############################################################
+def day1():
+    # Change directory to read the datafile
+    import os
+    script_path = os.path.abspath(__file__) # extract the complete path of the open file
+    script_dir = os.path.dirname(script_path) # extract the complete path of the FOLDER open file
+    os.chdir(script_dir) # change dir
+    import pandas as pd
+    dd = pd.read_csv('input.txt', header=None, names = ["Elf"], skip_blank_lines=False)
+    dd["Grp"] = dd.isnull().cumsum() # Create a group column exploiting the rows with NA
+    dd_csum = dd.groupby('Grp').sum() # cumsum over group
+    dd_nl = dd_csum.nlargest(3, 'Elf') # partial sorting of the 3 largest (R give the 3 smallest)
+    return {'sol1' : dd_nl.iloc[0], 'sol2' : dd_nl.sum()}
+day1()
